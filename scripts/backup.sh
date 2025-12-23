@@ -137,7 +137,14 @@ if [ "$DUMP_SIZE" -lt "$MIN_DUMP_SIZE" ]; then
     exit 1
 fi
 
-DUMP_SIZE_HUMAN=$(ls -lh "$DUMP_FILE" | awk '{print $5}')
+# Human readable size
+if [ "$DUMP_SIZE" -ge 1048576 ]; then
+    DUMP_SIZE_HUMAN="$((DUMP_SIZE / 1048576))MB"
+elif [ "$DUMP_SIZE" -ge 1024 ]; then
+    DUMP_SIZE_HUMAN="$((DUMP_SIZE / 1024))KB"
+else
+    DUMP_SIZE_HUMAN="${DUMP_SIZE}B"
+fi
 log "  Dump created (${DUMP_SIZE_HUMAN})"
 
 # =============================================================================
@@ -167,10 +174,14 @@ log "  Retention policy applied"
 # =============================================================================
 log "Step 4/4: Cleaning old local dumps..."
 
-DUMP_COUNT=$(ls -1 /dumps/${BACKUP_TAG}_*.dump 2>/dev/null | wc -l)
+# Count dumps using find
+DUMP_COUNT=$(find /dumps -maxdepth 1 -name "${BACKUP_TAG}_*.dump" -type f 2>/dev/null | wc -l)
 if [ "$DUMP_COUNT" -gt "$LOCAL_DUMPS_KEEP" ]; then
-    REMOVED=$(ls -t /dumps/${BACKUP_TAG}_*.dump | tail -n +$((LOCAL_DUMPS_KEEP + 1)) | wc -l)
-    ls -t /dumps/${BACKUP_TAG}_*.dump | tail -n +$((LOCAL_DUMPS_KEEP + 1)) | xargs -r rm -f
+    # Files are named with YYYYMMDD_HHMMSS, so sorting by name = sorting by time
+    # Sort reverse (newest first), skip first N, delete the rest
+    TO_REMOVE=$(find /dumps -maxdepth 1 -name "${BACKUP_TAG}_*.dump" -type f | sort -r | tail -n +$((LOCAL_DUMPS_KEEP + 1)))
+    REMOVED=$(echo "$TO_REMOVE" | grep -c . || true)
+    echo "$TO_REMOVE" | xargs -r rm -f
     log "  Removed $REMOVED old dumps"
 else
     log "  No cleanup needed ($DUMP_COUNT dumps)"
@@ -186,6 +197,6 @@ log "=========================================="
 log "BACKUP COMPLETE"
 log "=========================================="
 log "Dump: ${DUMP_FILE}"
-log "Local dumps: $(ls -1 /dumps/${BACKUP_TAG}_*.dump 2>/dev/null | wc -l)"
+log "Local dumps: $(find /dumps -maxdepth 1 -name "${BACKUP_TAG}_*.dump" -type f 2>/dev/null | wc -l)"
 
 ping_healthcheck success

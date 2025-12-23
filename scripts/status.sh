@@ -62,7 +62,7 @@ else
 fi
 
 # Local dumps count
-LOCAL_DUMPS=$(ls -1 /dumps/${BACKUP_TAG}_*.dump 2>/dev/null | wc -l || echo 0)
+LOCAL_DUMPS=$(find /dumps -maxdepth 1 -name "${BACKUP_TAG}_*.dump" -type f 2>/dev/null | wc -l)
 echo "Local dump files:       $LOCAL_DUMPS"
 
 # Check cron status
