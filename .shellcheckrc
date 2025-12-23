@@ -1,0 +1,8 @@
+# shellcheck configuration
+
+# Allow 'local' keyword (supported by busybox ash)
+disable=SC3043
+
+# Allow subshell variable assignment
+disable=SC2030
+disable=SC2031

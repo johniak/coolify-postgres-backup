@@ -1,0 +1,53 @@
+services:
+  backup:
+    build: .
+    environment:
+      # PostgreSQL
+      - PGHOST=${PGHOST}
+      - PGPORT=${PGPORT:-5432}
+      - PGUSER=${PGUSER}
+      - PGPASSWORD=${PGPASSWORD}
+      - PGDATABASE=${PGDATABASE}
+      # Restic / Backblaze B2
+      - RESTIC_REPOSITORY=${RESTIC_REPOSITORY}
+      - RESTIC_PASSWORD=${RESTIC_PASSWORD}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      # Backup settings
+      - BACKUP_TAG=${BACKUP_TAG:-postgres-backup}
+      - LOCAL_DUMPS_KEEP=${LOCAL_DUMPS_KEEP:-90}
+      - SHORT_RETENTION=${SHORT_RETENTION:-72}
+      - LONG_RETENTION=${LONG_RETENTION:-1440}
+      # Cron schedules
+      - SHORT_CRON=${SHORT_CRON:-0 * * * *}
+      - LONG_CRON=${LONG_CRON:-0 3 * * *}
+      # Monitoring
+      - HEALTHCHECKS_URL=${HEALTHCHECKS_URL:-}
+      # Timezone
+      - TZ=${TZ:-UTC}
+      # Network (for validation)
+      - COOLIFY_NETWORK=${COOLIFY_NETWORK}
+    volumes:
+      - dumps:/dumps
+      - restore:/restore
+      - cache:/root/.cache/restic
+    networks:
+      - coolify-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-x", "crond"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  dumps:
+  restore:
+  cache:
+
+networks:
+  coolify-network:
+    external: true
+    name: ${COOLIFY_NETWORK}
