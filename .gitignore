@@ -1,6 +1,5 @@
 # Environment files (contain secrets)
 .env
-docker-compose.test.yml
 .env.local
 .env.*.local
 

@@ -38,3 +38,27 @@ jobs:
           tags: coolify-postgres-backup:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    env:
+      COOLIFY_NETWORK: test-net
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create test network
+        run: docker network create test-net
+
+      - name: Start services
+        run: docker compose -f docker-compose.yaml -f docker-compose.test.yaml up -d --build --wait
+
+      - name: Run integration test
+        run: docker compose -f docker-compose.yaml -f docker-compose.test.yaml exec -T backup /scripts/test.sh
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose -f docker-compose.yaml -f docker-compose.test.yaml down -v
+          docker network rm test-net || true

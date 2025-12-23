@@ -5,7 +5,9 @@ RUN apk add --no-cache \
     restic \
     wget \
     tzdata \
-    procps
+    procps \
+    jq \
+    curl
 
 COPY scripts/ /scripts/
 COPY entrypoint.sh /entrypoint.sh
