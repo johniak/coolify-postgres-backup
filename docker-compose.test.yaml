@@ -1,0 +1,15 @@
+# Test compose - DO NOT COMMIT
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_PASSWORD=testpass123
+      - POSTGRES_DB=testdb
+    networks:
+      - test-net
+    ports:
+      - "5433:5432"
+
+networks:
+  test-net:
+    name: test-backup-net
