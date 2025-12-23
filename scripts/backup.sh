@@ -152,6 +152,9 @@ log "  Dump created (${DUMP_SIZE_HUMAN})"
 # =============================================================================
 log "Step 2/4: Uploading to restic..."
 
+# Clean stale locks before upload
+restic unlock 2>/dev/null || true
+
 retry_restic restic backup "$DUMP_FILE" --tag "${BACKUP_TAG}"
 
 log "  Upload complete"

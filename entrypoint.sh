@@ -45,6 +45,9 @@ printenv | grep -E '^(PG|RESTIC_|AWS_|BACKUP_|LOCAL_|SHORT_|LONG_|HEALTHCHECKS_|
 # =============================================================================
 # Initialize restic repository (once)
 # =============================================================================
+echo "Cleaning stale locks..."
+restic unlock 2>/dev/null || true
+
 echo "Initializing restic repository..."
 if restic snapshots >/dev/null 2>&1; then
     echo "  Repository already initialized"
@@ -66,9 +69,10 @@ echo "Generating crontab..."
 # Wrapper script that loads environment before running
 cat > /scripts/run-with-env.sh << 'WRAPPER'
 #!/bin/sh
-set -a
-. /etc/environment
-set +a
+# Safe environment loading (handles special chars in values)
+while IFS='=' read -r key value; do
+    [ -n "$key" ] && export "$key=$value"
+done < /etc/environment
 exec "$@"
 WRAPPER
 chmod +x /scripts/run-with-env.sh
