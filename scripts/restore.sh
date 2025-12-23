@@ -131,6 +131,9 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Step 6/6: Restoring database..."
 echo "  Dropping ${PGDATABASE} in 5 seconds... (Ctrl+C to cancel)"
 sleep 5
 
+echo "  Terminating other database connections..."
+psql -d postgres -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${PGDATABASE}' AND pid <> pg_backend_pid();" >/dev/null 2>&1 || true
+
 dropdb --if-exists "$PGDATABASE"
 createdb "$PGDATABASE"
 echo "  Database recreated"
